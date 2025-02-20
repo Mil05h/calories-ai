@@ -62,7 +62,7 @@ export const Home = () => {
     type?: "text" | "password";
     icon: React.ReactNode;
   }) => (
-    <div className="mb-6">
+    <div >
       <Controller
         name={name}
         control={control}
@@ -75,7 +75,6 @@ export const Home = () => {
                 placeholder={placeholder}
                 status={errors[name] ? "error" : ""}
                 size="large"
-                className="rounded-lg"
               />
             ) : (
               <Input
@@ -84,14 +83,13 @@ export const Home = () => {
                 placeholder={placeholder}
                 status={errors[name] ? "error" : ""}
                 size="large"
-                className="rounded-lg"
               />
             )}
             <ErrorMessage
               errors={errors}
               name={name}
               render={({ message }) => (
-                <div className="text-red-500 text-sm mt-2">{message}</div>
+                <div>{message}</div>
               )}
             />
           </div>
@@ -101,7 +99,7 @@ export const Home = () => {
   );
 
   const LoginForm = () => (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+    <form onSubmit={handleSubmit(onSubmit)} >
       <FormField name="email" placeholder="Email" icon={<UserOutlined />} />
       <FormField
         name="password"
@@ -114,7 +112,6 @@ export const Home = () => {
         htmlType="submit"
         block
         size="large"
-        className="mt-8 rounded-lg"
       >
         Login
       </Button>
@@ -122,29 +119,28 @@ export const Home = () => {
   );
 
   const SignupForm = () => (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-        <FormField name="email" placeholder="Email" icon={<UserOutlined />} />
-        <FormField
-          name="password"
-          placeholder="Password"
-          type="password"
-          icon={<LockOutlined />}
-        />
-        <FormField
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          type="password"
-          icon={<LockOutlined />}
-        />
-        <Button
-          type="primary"
-          htmlType="submit"
-          block
-          size="large"
-          className="mt-8 rounded-lg"
-        >
-          Sign Up
-        </Button>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <FormField name="email" placeholder="Email" icon={<UserOutlined />} />
+      <FormField
+        name="password"
+        placeholder="Password"
+        type="password"
+        icon={<LockOutlined />}
+      />
+      <FormField
+        name="confirmPassword"
+        placeholder="Confirm Password"
+        type="password"
+        icon={<LockOutlined />}
+      />
+      <Button
+        type="primary"
+        htmlType="submit"
+        block
+        size="large"
+      >
+        Sign Up
+      </Button>
     </form>
   );
 
@@ -162,13 +158,21 @@ export const Home = () => {
   ];
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full max-w-[380px] mx-auto">
-        <Title level={2} className="text-center">
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        padding: "20px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: "380px" }}>
+        <Title level={2} style={{ textAlign: "center", marginBottom: "24px" }}>
           Calories AI
         </Title>
 
-        <Card className="shadow-lg rounded-xl">
+        <Card>
           <Tabs
             activeKey={activeTab}
             items={items}
