@@ -62,12 +62,12 @@ export const Home = () => {
     type?: "text" | "password";
     icon: React.ReactNode;
   }) => (
-    <div >
+    <div>
       <Controller
         name={name}
         control={control}
         render={({ field }) => (
-          <div>
+          <div style={{ marginBottom: "10px" }}>
             {type === "password" ? (
               <Input.Password
                 {...field}
@@ -88,9 +88,7 @@ export const Home = () => {
             <ErrorMessage
               errors={errors}
               name={name}
-              render={({ message }) => (
-                <div>{message}</div>
-              )}
+              render={({ message }) => <div>{message}</div>}
             />
           </div>
         )}
@@ -99,7 +97,7 @@ export const Home = () => {
   );
 
   const LoginForm = () => (
-    <form onSubmit={handleSubmit(onSubmit)} >
+    <form onSubmit={handleSubmit(onSubmit)}>
       <FormField name="email" placeholder="Email" icon={<UserOutlined />} />
       <FormField
         name="password"
@@ -107,12 +105,7 @@ export const Home = () => {
         type="password"
         icon={<LockOutlined />}
       />
-      <Button
-        type="primary"
-        htmlType="submit"
-        block
-        size="large"
-      >
+      <Button type="primary" htmlType="submit" block size="large">
         Login
       </Button>
     </form>
@@ -133,12 +126,7 @@ export const Home = () => {
         type="password"
         icon={<LockOutlined />}
       />
-      <Button
-        type="primary"
-        htmlType="submit"
-        block
-        size="large"
-      >
+      <Button type="primary" htmlType="submit" block size="large">
         Sign Up
       </Button>
     </form>
@@ -165,10 +153,14 @@ export const Home = () => {
         alignItems: "center",
         minHeight: "100vh",
         padding: "20px",
+        backgroundColor: "#f0f0f0",
       }}
     >
       <div style={{ width: "100%", maxWidth: "380px" }}>
-        <Title level={2} style={{ textAlign: "center", marginBottom: "24px" }}>
+        <Title
+          level={2}
+          style={{ textAlign: "center", marginBottom: "24px",  }}
+        >
           Calories AI
         </Title>
 
