@@ -1,6 +1,5 @@
 import {
   Auth,
-  User,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
@@ -8,9 +7,15 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   AuthError,
+  User as FirebaseUser,
 } from "firebase/auth";
 import { initializeApp, FirebaseApp } from "firebase/app";
-import { IAPI, LoginOpts, RegisterOpts } from "./interface";
+import { IAPI } from "./interface";
+import type {
+  User,
+  LoginCredentials,
+  RegisterCredentials,
+} from "../models/user";
 
 export type ApiErrorType = {
   code: string;
@@ -20,6 +25,13 @@ export type ApiErrorType = {
 const createApiError = (code: string, message: string): ApiErrorType => ({
   code,
   message,
+});
+
+const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
+  id: firebaseUser.uid,
+  email: firebaseUser.email!,
+  displayName: firebaseUser.displayName,
+  photoURL: firebaseUser.photoURL,
 });
 
 const handleFirebaseError = (error: unknown): never => {
@@ -59,14 +71,14 @@ export class API implements IAPI {
     this.auth = getAuth(this.app);
   }
 
-  async login({ email, password }: LoginOpts): Promise<User> {
+  async login({ email, password }: LoginCredentials): Promise<User> {
     try {
       const userCredential = await signInWithEmailAndPassword(
         this.auth,
         email,
         password
       );
-      return userCredential.user;
+      return mapFirebaseUser(userCredential.user);
     } catch (error) {
       throw handleFirebaseError(error);
     }
@@ -76,7 +88,7 @@ export class API implements IAPI {
     email,
     password,
     displayName,
-  }: RegisterOpts): Promise<User> {
+  }: RegisterCredentials): Promise<User> {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         this.auth,
@@ -96,7 +108,7 @@ export class API implements IAPI {
         }
       }
 
-      return userCredential.user;
+      return mapFirebaseUser(userCredential.user);
     } catch (error) {
       throw handleFirebaseError(error);
     }
@@ -121,7 +133,7 @@ export class API implements IAPI {
         (user) => {
           unsubscribe();
           if (user) {
-            resolve(user);
+            resolve(mapFirebaseUser(user));
           } else {
             reject(
               createApiError("user-not-found", "No user is currently signed in")
