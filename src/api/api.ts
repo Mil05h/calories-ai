@@ -7,9 +7,39 @@ import {
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   signInWithEmailAndPassword,
   updateProfile,
-} from 'firebase/auth';
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { IAPI, LoginOpts, RegisterOpts } from './interface';
+  AuthError,
+} from "firebase/auth";
+import { initializeApp, FirebaseApp } from "firebase/app";
+import { IAPI, LoginOpts, RegisterOpts } from "./interface";
+
+export type ApiErrorType = {
+  code: string;
+  message: string;
+};
+
+const createApiError = (code: string, message: string): ApiErrorType => ({
+  code,
+  message,
+});
+
+const handleFirebaseError = (error: unknown): never => {
+  const authError = error as AuthError;
+
+  switch (authError.code) {
+    case "auth/user-not-found":
+      throw createApiError("user-not-found", "User not found");
+    case "auth/wrong-password":
+    case "auth/invalid-email":
+      throw createApiError("invalid-credentials", "Invalid email or password");
+    case "auth/email-already-in-use":
+      throw createApiError("email-already-in-use", "Email is already in use");
+    default:
+      throw createApiError(
+        "operation-failed",
+        authError.message || "Operation failed"
+      );
+  }
+};
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -30,32 +60,58 @@ export class API implements IAPI {
   }
 
   async login({ email, password }: LoginOpts): Promise<User> {
-    const userCredential = await signInWithEmailAndPassword(
-      this.auth,
-      email,
-      password
-    );
-    return userCredential.user;
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        this.auth,
+        email,
+        password
+      );
+      return userCredential.user;
+    } catch (error) {
+      throw handleFirebaseError(error);
+    }
   }
 
-  async register({ email, password, displayName }: RegisterOpts): Promise<User> {
-    const userCredential = await createUserWithEmailAndPassword(
-      this.auth,
-      email,
-      password
-    );
-    
-    if (displayName) {
-      await updateProfile(userCredential.user, {
-        displayName
-      });
-    }
+  async register({
+    email,
+    password,
+    displayName,
+  }: RegisterOpts): Promise<User> {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        this.auth,
+        email,
+        password
+      );
 
-    return userCredential.user;
+      if (displayName) {
+        try {
+          await updateProfile(userCredential.user, {
+            displayName,
+          });
+        } catch (error) {
+          // If updating profile fails, we still want to return the user
+          // but we should log the error
+          console.error("Failed to update user profile:", error);
+        }
+      }
+
+      return userCredential.user;
+    } catch (error) {
+      throw handleFirebaseError(error);
+    }
   }
 
   async logout(): Promise<void> {
-    await this.auth.signOut();
+    try {
+      await this.auth.signOut();
+    } catch (error) {
+      const authError = error as AuthError;
+      throw createApiError(
+        "sign-out-failed",
+        authError.message || "Failed to sign out"
+      );
+    }
   }
 
   async requireUser(): Promise<User> {
@@ -67,15 +123,24 @@ export class API implements IAPI {
           if (user) {
             resolve(user);
           } else {
-            reject(new Error('No user is currently signed in.'));
+            reject(
+              createApiError("user-not-found", "No user is currently signed in")
+            );
           }
         },
-        reject
+        (error) => {
+          unsubscribe();
+          reject(handleFirebaseError(error));
+        }
       );
     });
   }
 
   async sendPasswordResetEmail(email: string): Promise<void> {
-    await firebaseSendPasswordResetEmail(this.auth, email);
+    try {
+      await firebaseSendPasswordResetEmail(this.auth, email);
+    } catch (error) {
+      throw handleFirebaseError(error);
+    }
   }
-} 
+}
