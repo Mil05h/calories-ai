@@ -8,8 +8,14 @@ import {
   updateProfile,
   AuthError,
   User as FirebaseUser,
+  connectAuthEmulator,
 } from "firebase/auth";
 import { initializeApp, FirebaseApp } from "firebase/app";
+import { 
+  getFirestore, 
+  connectFirestoreEmulator,
+  Firestore,
+} from 'firebase/firestore';
 import { IAPI } from "./interface";
 import type {
   User,
@@ -65,10 +71,19 @@ const firebaseConfig = {
 export class API implements IAPI {
   private readonly app: FirebaseApp;
   private readonly auth: Auth;
+  private readonly db: Firestore;
 
   constructor() {
     this.app = initializeApp(firebaseConfig);
     this.auth = getAuth(this.app);
+    this.db = getFirestore(this.app);
+
+    // Connect to emulators in development
+    if (import.meta.env.DEV) {
+      connectAuthEmulator(this.auth, 'http://localhost:9099', { disableWarnings: true });
+      connectFirestoreEmulator(this.db, 'localhost', 8080);
+      console.log('Connected to Firebase emulators');
+    }
   }
 
   async login({ email, password }: LoginCredentials): Promise<User> {
