@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Tabs, Input, Button, Card, Typography, message } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { Tabs, Input, Button, Card, Typography, message, Divider } from "antd";
+import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import { ErrorMessage } from "@hookform/error-message";
 import { getAPI } from "../api";
 import type { ApiErrorType } from "../api/api";
 import type { LoginCredentials, RegisterCredentials } from "../models/user";
+import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
@@ -33,8 +34,10 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 type FormValues = LoginFormValues & Partial<SignupFormValues>;
 
 export const Home = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
     control,
@@ -58,22 +61,41 @@ export const Home = () => {
           email: values.email,
           password: values.password,
         };
-        await api.login(credentials);
+        const user = await api.login(credentials);
         message.success("Successfully logged in!");
+        navigate(`/user/${user.id}`);
       } else {
         const credentials: RegisterCredentials = {
           email: values.email,
           password: values.password,
           displayName: values.email.split("@")[0],
         };
-        await api.register(credentials);
+        const user = await api.register(credentials);
         message.success("Successfully registered!");
+        navigate(`/user/${user.id}`);
       }
     } catch (error) {
       const apiError = error as ApiErrorType;
       message.error(apiError.message || "An error occurred");
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const api = await getAPI();
+    if (!api) return;
+
+    setGoogleLoading(true);
+    try {
+      const user = await api.loginWithGoogle();
+      message.success("Successfully logged in with Google!");
+      navigate(`/user/${user.id}`);
+    } catch (error) {
+      const apiError = error as ApiErrorType;
+      message.error(apiError.message || "An error occurred");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -122,6 +144,21 @@ export const Home = () => {
     </div>
   );
 
+  const GoogleButton = () => (
+    <>
+      <Divider>Or</Divider>
+      <Button
+        icon={<GoogleOutlined />}
+        block
+        size="large"
+        onClick={handleGoogleSignIn}
+        loading={googleLoading}
+      >
+        Continue with Google
+      </Button>
+    </>
+  );
+
   const LoginForm = () => (
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormField name="email" placeholder="Email" icon={<UserOutlined />} />
@@ -140,6 +177,7 @@ export const Home = () => {
       >
         Login
       </Button>
+      <GoogleButton />
     </form>
   );
 
@@ -167,6 +205,7 @@ export const Home = () => {
       >
         Sign Up
       </Button>
+      <GoogleButton />
     </form>
   );
 

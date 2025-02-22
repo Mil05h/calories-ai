@@ -13,7 +13,7 @@ service cloud.firestore {
     }
 
     // Rules for user-specific data
-    match /users/{userId} {
+    match /user/{userId} {
       allow read: if isOwner(userId);
       allow write: if isOwner(userId);
       

@@ -6,4 +6,5 @@ export interface IAPI {
   logout(): Promise<void>;
   requireUser(): Promise<User>;
   sendPasswordResetEmail(email: string): Promise<void>;
+  loginWithGoogle(): Promise<User>;
 }

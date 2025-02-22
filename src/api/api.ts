@@ -9,6 +9,8 @@ import {
   AuthError,
   User as FirebaseUser,
   connectAuthEmulator,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { 
@@ -72,11 +74,13 @@ export class API implements IAPI {
   private readonly app: FirebaseApp;
   private readonly auth: Auth;
   private readonly db: Firestore;
+  private readonly googleProvider: GoogleAuthProvider;
 
   constructor() {
     this.app = initializeApp(firebaseConfig);
     this.auth = getAuth(this.app);
     this.db = getFirestore(this.app);
+    this.googleProvider = new GoogleAuthProvider();
 
     // Connect to emulators in development
     if (import.meta.env.DEV) {
@@ -166,6 +170,15 @@ export class API implements IAPI {
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
       await firebaseSendPasswordResetEmail(this.auth, email);
+    } catch (error) {
+      throw handleFirebaseError(error);
+    }
+  }
+
+  async loginWithGoogle(): Promise<User> {
+    try {
+      const result = await signInWithPopup(this.auth, this.googleProvider);
+      return mapFirebaseUser(result.user);
     } catch (error) {
       throw handleFirebaseError(error);
     }
