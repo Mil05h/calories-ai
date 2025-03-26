@@ -7,7 +7,7 @@ interface LoaderData {
   user: UserType;
 }
 
-export const User = () => {
+export const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useLoaderData() as LoaderData;
 

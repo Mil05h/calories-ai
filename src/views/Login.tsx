@@ -33,7 +33,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type SignupFormValues = z.infer<typeof signupSchema>;
 type FormValues = LoginFormValues & Partial<SignupFormValues>;
 
-export const Home = () => {
+export const Login = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -46,7 +46,7 @@ export const Home = () => {
     reset,
   } = useForm<FormValues>({
     resolver: zodResolver(activeTab === "login" ? loginSchema : signupSchema),
-    mode: "onChange",
+    mode: "onBlur",
     criteriaMode: "all",
   });
 

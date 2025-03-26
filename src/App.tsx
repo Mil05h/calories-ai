@@ -1,12 +1,12 @@
 import './App.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { Home } from './views/Home'
 import { getAPI } from './api'
 
 const router = createBrowserRouter([
   {
     path: "/",
     lazy: async () => {
+      const { Login } = await import('./views/Login');
       return {
         loader: async () => {
           try {
@@ -24,14 +24,14 @@ const router = createBrowserRouter([
             return null;
           }
         },
-        Component: Home
+        Component: Login
       };
     }
   },
   {
     path: "/user/:userId",
     lazy: async () => {
-      const { User } = await import('./views/User');
+      const { Dashboard } = await import('./views/Dashboard');
       return {
         loader: async () => {
           const api = await getAPI();
@@ -47,7 +47,7 @@ const router = createBrowserRouter([
             });
           }
         },
-        Component: User
+        Component: Dashboard
       };
     }
   }
