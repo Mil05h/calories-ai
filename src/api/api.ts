@@ -17,6 +17,8 @@ import {
   getFirestore, 
   connectFirestoreEmulator,
   Firestore,
+  collection,
+  addDoc,
 } from 'firebase/firestore';
 import { IAPI } from "./interface";
 import type {
@@ -24,6 +26,8 @@ import type {
   LoginCredentials,
   RegisterCredentials,
 } from "../models/user";
+import { MealWithoutId } from "../models/meal";
+import { mealConverter } from "./converters";
 
 export type ApiErrorType = {
   code: string;
@@ -179,6 +183,16 @@ export class API implements IAPI {
     try {
       const result = await signInWithPopup(this.auth, this.googleProvider);
       return mapFirebaseUser(result.user);
+    } catch (error) {
+      throw handleFirebaseError(error);
+    }
+  }
+
+  async addMeal(meal: MealWithoutId): Promise<string> {
+    try {
+      const mealsCollection = collection(this.db, 'meals').withConverter(mealConverter);
+      const docRef = await addDoc(mealsCollection, meal);
+      return docRef.id;
     } catch (error) {
       throw handleFirebaseError(error);
     }

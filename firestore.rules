@@ -14,18 +14,15 @@ service cloud.firestore {
 
     // Rules for user-specific data
     match /user/{userId} {
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId);
+      allow read, write: if isOwner(userId);
       
       // Nested collections under user document
-      match /meals/{mealId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      match /dailyLogs/{logId} {
-        allow read, write: if isOwner(userId);
+      match /meals/ {
+        allow read, write: if isOwner();
       }
     }
+
+    
 
     // Default deny all
     match /{document=**} {
