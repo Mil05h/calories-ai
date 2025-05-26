@@ -17,8 +17,8 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
       
       // Nested collections under user document
-      match /meals/ {
-        allow read, write: if isOwner();
+      match /meals/{mealId} {
+        allow read, write: if isOwner(userId);
       }
     }
 

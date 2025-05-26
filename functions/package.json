@@ -1,0 +1,33 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for Calories-AI",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "yarn build && firebase emulators:start --only functions",
+    "shell": "yarn build && firebase functions:shell",
+    "start": "yarn shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "firebase",
+    "functions",
+    "openai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase-admin": "^11.10.1",
+    "firebase-functions": "^4.5.0",
+    "openai": "^4.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.4",
+    "typescript": "^5.2.2"
+  }
+}

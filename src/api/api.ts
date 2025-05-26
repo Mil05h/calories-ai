@@ -1,33 +1,45 @@
 import {
-  Auth,
+  type Auth,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   signInWithEmailAndPassword,
   updateProfile,
-  AuthError,
-  User as FirebaseUser,
+  type AuthError,
+  type User as FirebaseUser,
   connectAuthEmulator,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { initializeApp, FirebaseApp } from "firebase/app";
-import { 
-  getFirestore, 
+import { initializeApp, type FirebaseApp } from "firebase/app";
+import {
+  getFirestore,
   connectFirestoreEmulator,
-  Firestore,
+  type Firestore,
   collection,
   addDoc,
-} from 'firebase/firestore';
-import { IAPI } from "./interface";
+} from "firebase/firestore";
+import {
+  getFunctions,
+  httpsCallable,
+  connectFunctionsEmulator,
+  type Functions,
+} from "firebase/functions";
+import type { IAPI } from "./interface";
 import type {
   User,
   LoginCredentials,
   RegisterCredentials,
 } from "../models/user";
-import { MealWithoutId } from "../models/meal";
+import type { MealWithoutId } from "../models/meal";
 import { mealConverter } from "./converters";
+import type { MealAnalysisInput, NutritionAnalysis } from "./interface";
+import {
+  connectStorageEmulator,
+  getStorage,
+  type FirebaseStorage,
+} from "firebase/storage";
 
 export type ApiErrorType = {
   code: string;
@@ -41,7 +53,7 @@ const createApiError = (code: string, message: string): ApiErrorType => ({
 
 const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
   id: firebaseUser.uid,
-  email: firebaseUser.email!,
+  email: firebaseUser.email ?? "",
   displayName: firebaseUser.displayName,
   photoURL: firebaseUser.photoURL,
 });
@@ -78,19 +90,27 @@ export class API implements IAPI {
   private readonly app: FirebaseApp;
   private readonly auth: Auth;
   private readonly db: Firestore;
+  private readonly functions: Functions;
+  private readonly storage: FirebaseStorage;
   private readonly googleProvider: GoogleAuthProvider;
 
   constructor() {
     this.app = initializeApp(firebaseConfig);
     this.auth = getAuth(this.app);
     this.db = getFirestore(this.app);
+    this.functions = getFunctions(this.app);
+    this.storage = getStorage(this.app);
     this.googleProvider = new GoogleAuthProvider();
 
     // Connect to emulators in development
     if (import.meta.env.DEV) {
-      connectAuthEmulator(this.auth, 'http://localhost:9099', { disableWarnings: true });
-      connectFirestoreEmulator(this.db, 'localhost', 8080);
-      console.log('Connected to Firebase emulators');
+      connectAuthEmulator(this.auth, "http://localhost:9099", {
+        disableWarnings: true,
+      });
+      connectStorageEmulator(this.storage, "localhost", 9199);
+      connectFirestoreEmulator(this.db, "localhost", 8080);
+      connectFunctionsEmulator(this.functions, "localhost", 5001);
+      console.log("Connected to Firebase emulators");
     }
   }
 
@@ -190,11 +210,47 @@ export class API implements IAPI {
 
   async addMeal(meal: MealWithoutId): Promise<string> {
     try {
-      const mealsCollection = collection(this.db, 'meals').withConverter(mealConverter);
+      const mealsCollection = collection(this.db, "meals").withConverter(
+        mealConverter
+      );
       const docRef = await addDoc(mealsCollection, meal);
       return docRef.id;
     } catch (error) {
       throw handleFirebaseError(error);
+    }
+  }
+
+  async analyzeMealNutrition(
+    input: MealAnalysisInput
+  ): Promise<NutritionAnalysis> {
+    try {
+      if (!input.description && !input.imageBase64) {
+        throw createApiError(
+          "invalid-input",
+          "Either meal description or image must be provided"
+        );
+      }
+
+      // Ensure user is authenticated before calling the function
+      await this.requireUser();
+
+      // Call the Firebase Function
+      const analyzeMeal = httpsCallable<MealAnalysisInput, NutritionAnalysis>(
+        this.functions,
+        "analyzeMealNutrition"
+      );
+
+      const result = await analyzeMeal(input);
+      return result.data;
+    } catch (error) {
+      if ((error as ApiErrorType).code) {
+        throw error;
+      }
+      console.error("Function call error:", error);
+      throw createApiError(
+        "analysis-failed",
+        "Failed to analyze meal nutrition. Please try again."
+      );
     }
   }
 }
