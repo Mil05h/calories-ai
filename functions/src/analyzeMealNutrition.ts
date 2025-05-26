@@ -141,7 +141,7 @@ export const analyzeMealNutrition = onCall(
 
       // Call OpenAI API with GPT-4 Vision capabilities
       const response = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: "gpt-4o-mini",
         messages: messages,
         max_tokens: 1000,
         response_format: { type: "json_object" },
